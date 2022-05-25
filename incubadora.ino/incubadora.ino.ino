@@ -4,6 +4,7 @@ const int Rc = 10000; //valor de la resistencia
 const int Vcc = 5;
 const int temp_sensor = A0;
 const int hum_sensor = A1;
+const int selector = A2;
 
 float A = 0.0006973550913078027;
 float B = 0.00028800736970464863;
@@ -23,9 +24,20 @@ void loop()
   float raw_temp = analogRead(temp_sensor);
   float raw_hum = analogRead(hum_sensor);
   float hum = map(raw_hum, 0, 1023, 0, 2000);
+  float raw_temp_set = analogRead(selector);
+  float temp_set = map(raw_temp_set, 0, 1023, 0, 120);
+  // Config PID meta value
+  if(temp_set < 30){
+    temp_set = 30;
+    } 
+  if(temp_set > 42){
+    temp_set = 42;
+    }
+  Serial.print("Temperatura Meta: ");
+  Serial.print(temp_set);
+  Serial.print("\n");
   Serial.print("Humedad: ");
   Serial.println(hum);
-
   // Calculate the temp value
   float V =  raw_temp / 1024 * Vcc;
 
