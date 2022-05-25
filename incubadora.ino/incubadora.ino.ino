@@ -14,6 +14,8 @@ float K = 2.5; //factor de disipacion en mW/C
 void setup()
 {
   Serial.begin(9600);
+  pinMode(13, OUTPUT);
+  pinMode(12, OUTPUT);
 }
 
 void loop() 
@@ -35,6 +37,20 @@ void loop()
 
   float kelvin = R_th - V*V/(K * R)*1000;
   float celsius = kelvin - 273.15;
+
+  if(celsius >= 42){
+    digitalWrite(13, HIGH);
+    }
+  else{
+    digitalWrite(13, LOW);
+    }
+
+  if(celsius <= 30){
+    digitalWrite(12, HIGH);
+    }
+  else{
+    digitalWrite(12, LOW);
+    }
 
   Serial.print("T = ");
   Serial.print(celsius);
