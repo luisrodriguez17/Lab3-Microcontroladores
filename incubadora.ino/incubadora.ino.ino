@@ -1,6 +1,8 @@
 #include <math.h>
 #include <Adafruit_PCD8544.h>
 #include <util/delay.h>
+#include <PID_v1.h>
+
 const int Rc = 10000; //valor de la resistencia
 const int Vcc = 5;
 const int temp_sensor = A0;
@@ -13,6 +15,9 @@ float C = 5.400097451986799e-9;
 float temp_set = 0;
 float hum = 0;
 float celsius = 0;
+double setpoint, input, output;
+
+PID thePID(&input, &output, &setpoint, 0, 10, 100, DIRECT);
 
 float K = 2.5; //factor de disipacion en mW/C
 
@@ -42,14 +47,15 @@ void setup()
   display.clearDisplay();
   display.setTextSize(1);
   display.setTextColor(BLACK);
+  thePID.SetMode(AUTOMATIC);
 }
 
 void loop() 
 {
   float raw_temp = analogRead(temp_sensor);
   float raw_hum = analogRead(hum_sensor);
-  hum = map(raw_hum, 0, 1023, 0, 200);
   float raw_temp_set = analogRead(selector);
+  hum = map(raw_hum, 0, 1023, 0, 200);
   temp_set = map(raw_temp_set, 0, 1023, 0, 120);
   // Config PID meta value
   if(temp_set < 30){
@@ -58,23 +64,20 @@ void loop()
   if(temp_set > 42){
     temp_set = 42;
     }
+  setpoint = temp_set;
   Serial.print("Temperatura Meta: ");
   Serial.print(temp_set);
   Serial.print("\n");
-  Serial.print("Humedad: ");
+  Serial.print("Humedad %: ");
   Serial.println(hum);
   // Calculate the temp value
   float V =  raw_temp / 1024 * Vcc;
-
   float R = (Rc * V ) / (Vcc - V);
-  
-
   float logR  = log(R);
   float R_th = 1.0 / (A + B * logR + C * logR * logR * logR );
-
   float kelvin = R_th - V*V/(K * R)*1000;
   celsius = kelvin - 273.15;
-
+  input = celsius;
   if(celsius >= 42){
     digitalWrite(13, HIGH);
     }
@@ -88,9 +91,11 @@ void loop()
   else{
     digitalWrite(12, LOW);
     }
-
+  thePID.Compute();
+  analogWrite(A3, output);
   Serial.print("T = ");
   Serial.print(celsius);
   Serial.print("C\n");
   display_screen();
+  delay(4000);
 }
